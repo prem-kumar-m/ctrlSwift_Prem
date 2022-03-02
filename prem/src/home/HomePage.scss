@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100&display=swap");
+
+
+.view {
+  position: relative;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  cursor: default;
+  
+}
+.view img {
+  position: relative;
+  display: block;
+
+}
+.img-fluid {
+  width: 100%;
+}
+.img-fluid1 {
+
+  width: 150%;
+}
+.img-fluid2 {
+
+  width: 60%;
+}
+
+.b1deskcontainer .b1deskcontent {
+  opacity: .90;
+  border-radius: 0px;
+  margin-left: 12em;
+  width: 70em;
+}
+
+  
+
+
+#header {
+  position: fixed;
+  padding: 14px 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 10;
+  transition: all 0.5s;
+  z-index: 997;
+}
+.view .mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+
+
+}
+.rgba-green-strong,
+.rgba-green-strong:after {
+  background-color: rgba(4, 9, 30, 0.85);
+}
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+
+.homecontainer1{
+  background-color:#30a1e5;
+  height:"100%";
+  width:"50%";
+}
+.homecontainer2{
+  background-color:white;
+  height: 100%;
+
+}
+.homecontainer3{
+  background-color:#ff9100;
+  height: 100%;
+
+}
+.homecontainer4 {
+  background-position: center ;
+  background-size: cover;
+  width: 100%;
+  margin-bottom: 10em;
+  background-color: white;
+  margin-bottom:20em;
+  height: 40em;
+  text-align-last: left;
+}
+.textalign
+{
+  margin-top: 2em;
+  margin-left: 2em;
+  font-size: 36px;
+  color:#1b1916;
+  font-style: italic;
+  font-weight:initial;
+}
+.textalign2
+{
+  margin-top: 2em;
+  margin-left: 4em;
+  color:#1b1916;
+  font-style: italic;
+  font-weight:initial;
+  font-size: 18px;
+}
+.textalign3
+{
+  margin-top: 1em;
+  margin-left: 4em;
+  color:#605c58;
+  font-weight:bold;
+  font-size: 20px;
+}
+.getstarted{
+  margin-left: 5em;
+  margin-top: 1em;
+  font-size: 16px;
+  font-weight: bold; 
+   border-radius: 2em;
+  height:3em;
+   
+}
+.video{
+  margin-left: 50em;
+  margin-top : -40em;
+  width:100%;
+}
+
+
+
+.content{
+  border-radius: 10px;
+  background-size: contain;
+  text-align: center;
+  width: 50%;
+  height: 50%;
+  
+ 
+}
+/* my source */
+.content hover:para2{
+  position: relative;
+  left:80%;
+	height: 500px;
+
+}
+
+.slide{
+  width:100%;
+  height: 80%;
+  margin-top: 10%;
+  margin-bottom: 10%;
+  text-align: center;
+  border-radius: 10px;
+
+
+}
+
+.space{padding-left:-15px;padding-right:-15px}

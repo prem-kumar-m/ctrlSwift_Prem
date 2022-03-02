@@ -1,0 +1,608 @@
+import React from "react";
+import { Container, Row, Col, Form, Button, Modal } from "react-bootstrap";
+import { Formik } from "formik";
+import HeaderLogin from "../components/header_login/HeaderLogin";
+import Header from "../components/header/Header";
+import Footer from "../components/footer/Footer.js";
+import * as Yup from "yup"; // for everything
+import Swal from 'sweetalert2';
+import backgroundImage23 from "../images/header-bg4.jpg";
+import { Redirect } from 'react-router'
+import { emailValidator, mobileValidator, firstNameValidator, lastNameValidator } from '../Core/utils'
+import DatePicker from "react-datepicker";
+import * as Constants from '../constants';
+import "react-datepicker/dist/react-datepicker.css";
+import { ReactMultiEmail, isEmail } from 'react-multi-email';
+import 'react-multi-email/style.css';
+import { Link } from 'react-router-dom';
+import backgroundImage from "../images/inner-header-bg.jpg";
+import { Select } from "semantic-ui-react";
+
+import moment from 'moment';
+import ReactTimeslotCalendar from 'react-timeslot-calendar';
+import Carousel from 'react-bootstrap/Carousel';
+import { PropTypes } from 'prop-types';
+import { getPriceDetails, requestInr, getPriceByTerms, dataCustomizePage2,insertPlan } from './action';
+import queryString from 'query-string';
+import { connect } from 'react-redux';
+import Switch from "react-switch";
+import BeautyStars from 'beauty-stars'
+import {
+    Accordion,
+    AccordionItem,
+    AccordionItemHeading,
+    AccordionItemButton,
+    AccordionItemPanel,
+} from 'react-accessible-accordion';
+import 'react-accessible-accordion/dist/fancy-example.css';
+import { event } from "jquery";
+import ReactTooltip from 'react-tooltip';
+
+class customizePage2 extends React.Component {
+    constructor(props) {
+        super();
+
+        this.state = {
+            submitted: false,
+            terms: '',
+            estimationValueRequestList: '',
+            data: '',
+            dataUSD: '',
+            estimationValue: '',
+            currency: '$',
+            recommendedPrice: '',
+            dataCustomizePage1: '',
+            showplanModal: 'false',
+        }
+        this.handleChange = this.handleChange.bind(this);
+
+    }
+
+    handleChange = (event) => {
+        const { name, value } = event.target;
+
+        // console.log("name===>" + name + "----------------value=>" + value)
+        this.setState({
+            [name]: value
+        });
+    };
+
+    termsHandleChange = (row, rowkey, event) => {
+        this.setState({ currency: '$' })
+        const data = this.state.estimationValueRequestList
+        // console.log(JSON.stringify(this.state.estimationValueRequestList.estimationValueRequestList[rowkey].paymentTerms));
+        // console.log("row===>\n" + JSON.stringify(row) + "----------------rowkey=>\n" + rowkey + "--------opt --------->\n" + JSON.stringify(event))
+
+        // console.log("data[" + rowkey + "]\n" + JSON.stringify(data.estimationValueRequestList[rowkey]));
+        if (data.estimationValueRequestList[rowkey].paymentTerms === "Yearly") {
+            // console.log('1')
+            data.estimationValueRequestList[rowkey].paymentTerms = "Monthly"
+        } else if (data.estimationValueRequestList[rowkey].paymentTerms === "Monthly") {
+            // console.log('2')
+            data.estimationValueRequestList[rowkey].paymentTerms = "Yearly"
+        }
+        // console.log("data\n" + JSON.stringify(data));
+        this.props.getPriceByTerms(data);
+    };
+
+    currencyHandleChange = (event) => {
+        const { name, value } = event.target;
+        this.setState({
+            [name]: value,
+        });
+
+        if (value === "₹" && !!this.state.data) {
+            // console.log(this.state.data);
+            const planRequestList = this.state.data.individualPlanPricingList.map(row => {
+                return {
+                    "plan": row.plan,
+                    "commercialModel": row.commercialModel,
+                    "individualPrice": row.individualPlanPrice
+                }
+            })
+            const data = {
+                "email":window.sessionStorage.getItem(Constants.ACCESS_EMAIL),
+                "currencyCode": "INR",
+                "individualPlanRequestList": this.state.data.individualPlanPricingList,
+                "estimationValue": this.state.data.estimationValue,
+                "taxPercentage": this.state.data.taxPercentage,
+                "taxAmount": this.state.data.taxAmount,
+                "contractDuration": this.state.data.contractDuration
+            }
+            // console.log("data \n" + JSON.stringify(data));
+            this.props.requestInr(data)
+        } else if (value === "$") {
+
+
+            this.props.getPriceDetails(this.state.estimationValueRequestList);
+
+        }
+
+    };
+
+
+
+    navigate = (url) => {
+        this.props.history.push(url);
+    };
+
+
+    maxLengthCheck = (object) => {
+        if (object.target.value.length > object.target.maxLength) {
+            object.target.value = object.target.value.slice(0, object.target.maxLength)
+        }
+    }
+
+    viewDmsa = () => {
+        if (!!window.sessionStorage.getItem(Constants.ACCESS_EMAIL)) {
+            this.props.dataCustomizePage2(this.state);
+            // console.log(this.props.dataCustomizePage);
+            localStorage.setItem('dataCustomizePage', JSON.stringify(this.state));
+            var dataCustomizePage = JSON.parse(localStorage.getItem("dataCustomizePage1"));
+            // console.log("data \n"+JSON.stringify(dataCustomizePage))
+            const data ={
+                "email":window.sessionStorage.getItem(Constants.ACCESS_EMAIL),
+    "plansList":dataCustomizePage.plansList,
+    "isTollFreeNumber":dataCustomizePage.isTollFreeNumber,
+ 
+    "contractDuration":dataCustomizePage.contractDuration,
+ 
+    "payment":dataCustomizePage.payment,
+ 
+    "serviceInitializationDate":dataCustomizePage.serviceInitializationDate,
+    "currencyCode":this.state.currency =="$"?"USD":"INR",
+            }
+            // console.log("data \n"+JSON.stringify(data));
+
+            this.props.insertPlan(data);
+            //this.props.history.push('/dmsa');
+        } else {
+            Swal.fire({
+                title: "",
+                text: "Please login before proceeding",
+                icon: 'warning',
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+    componentDidMount() {
+        // console.log("window.sessionStorage.getItem(Constants.ACCESS_EMAIL)\n" + window.sessionStorage.getItem(Constants.ACCESS_EMAIL))
+        // console.log("this.props.recommendedPrice \n" + JSON.stringify(this.props.recommendedPrice));
+        let url = this.props.location.search;
+        let params = queryString.parse(url);
+        // console.log(params);
+        this.setState({
+            terms: params.terms
+        })
+        this.state.recommendedPrice = JSON.parse(localStorage.getItem("recommendedPrice"));
+        this.state.dataCustomizePage1 = JSON.parse(localStorage.getItem("dataCustomizePage1"));
+        // console.log("dataCustomizePage1 \n" + JSON.stringify(this.state.dataCustomizePage1))
+        // console.log("data \n" + JSON.stringify(this.state.recommendedPrice))
+
+        if (this.state.recommendedPrice !== undefined && this.state.recommendedPrice !== null) {
+            if (this.state.recommendedPrice.modelList.length > 0) {
+
+                this.state.estimationValueRequestList = {
+                    "email": window.sessionStorage.getItem(Constants.ACCESS_EMAIL) ? window.sessionStorage.getItem(Constants.ACCESS_EMAIL) : '',
+                    "estimationValueRequestList": this.state.dataCustomizePage1.plansList,
+                    "serviceInitializationDate": this.state.dataCustomizePage1.serviceInitializationDate,
+                    "contractDuration": this.state.dataCustomizePage1.contractDuration,
+                }
+            }
+            // console.log(" this.state.estimationValueRequestList\n" + JSON.stringify(this.state.estimationValueRequestList));
+            this.props.getPriceDetails(this.state.estimationValueRequestList)
+        }
+
+
+    }
+
+    handleClick = () => {
+        alert("Thanks!! For your Valuable Feedback");
+    }
+
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        // console.log("dataCustomizePage1 \n" + JSON.stringify(this.state.dataCustomizePage1))
+
+        // console.log("this.state.currency \n" + JSON.stringify(this.state.currency));
+        // console.log("this.state.currency \n" + JSON.stringify(this.state.data));
+
+        // console.log('pricedetails \n' + JSON.stringify(this.props.currencyInr));
+
+        // console.log('this.props.pricedetails \n' + JSON.stringify(this.props.pricedetails));
+        if (this.props.pricedetails !== prevProps.pricedetails) {
+            if (this.props.pricedetails.success) {
+
+                this.setState({
+                    data: this.props.pricedetails,
+                    dataUSD: this.props.pricedetails,
+                    estimationValue: this.props.pricedetails.estimationValue
+                })
+            }
+        }
+        // console.log('this.props.pricedetails \n' + JSON.stringify(this.props.priceByTerms));
+        if (this.props.priceByTerms !== prevProps.priceByTerms) {
+            if (this.props.priceByTerms.success) {
+
+                this.setState({
+                    data: this.props.priceByTerms,
+                    estimationValue: this.props.priceByTerms.estimationValue
+                })
+            }
+        }
+
+        if (this.props.insertPlanResponse !== prevProps.insertPlanResponse) {
+            if (this.props.insertPlanResponse.success) {
+                // console.log(JSON.stringify(this.props.insertPlanResponse))
+                var createOrderData ={
+                    "email":window.sessionStorage.getItem(Constants.ACCESS_EMAIL),
+                    "estimationValue":this.state.data.estimationValue,
+                    "currencyCode":this.state.currency =="$"?"USD":"INR",
+                }
+                localStorage.setItem('createOrderData', JSON.stringify(createOrderData));
+                // console.log(JSON.stringify(this.state.data.individualPlanPricingList))
+                // console.log(JSON.stringify(this.state.dataCustomizePage1))
+                localStorage.setItem('insertPlanResponse', JSON.stringify(this.props.insertPlanResponse));
+
+                var customize1 = JSON.parse(localStorage.getItem("customize1"));
+                // console.log("customize1\n"+customize1)
+                var paymentResponces = this.state.data.individualPlanPricingList.map((row,rowkey)=>{
+                    // console.log(JSON.stringify(row))
+                   
+                    return {
+                        "plan":row.plan,
+                        "ticket":row.ticket,
+                        "serviceSupport":customize1.plansList[rowkey].serviceSupport,
+                        "supportWindow":customize1.plansList[rowkey].supportWindow,
+                        "selectedModelPrice":row.selectedModelPrice,
+                        "paymentTerms":row.paymentTerms,
+                        "price":row.price,
+                        "discount":row.discount,
+                        "discountAmount":row.discountAmount,
+                        "days":row.days,
+                        "totalPricePerYear":row.totalPricePerYear,
+                        "totalPerMonth":row.totalPricePerMonth
+                   }
+                })
+
+
+                // console.log(JSON.stringify(paymentResponces))
+                localStorage.setItem('paymentResponces', JSON.stringify(paymentResponces));
+
+             this.props.history.push('/dmsa');    
+            }else{
+                Swal.fire({
+                    title: "",
+                    text:this.props.insertPlanResponse.message,
+                    icon: 'warning',
+                    showCancelButton: false,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'OK'
+                })
+            }
+        }  
+
+        if (this.props.currencyInr !== prevProps.currencyInr) {
+            if (this.props.currencyInr.success) {
+                // console.log("this.props.currencyInr.individualPlanPricingList \n" + JSON.stringify(this.props.currencyInr.individualPlanPricingList));
+                // console.log("this.state.data \n" + JSON.stringify(this.state.data));
+
+
+                this.setState({
+                    data: this.props.currencyInr,
+                    estimationValue: this.props.currencyInr.estimationValue
+                })
+                localStorage.setItem('orderSummaryData', JSON.stringify(this.props.currencyInr));
+
+            }
+        }
+    }
+
+
+    render() {
+        if (this.state.isReadyToRedirect) return <Redirect to="/user" />
+        const { currency } = this.state
+        return (
+            <div>
+                {((!window.sessionStorage.getItem(Constants.ACCESS_EMAIL))) ? <Header /> : <HeaderLogin />}
+
+                <div class="view">
+                    <section class="generic-banner relative banner-area-inner5">
+                        <div class="overlay overlay-bg overlay-bg-blk"></div>
+                        <div class="container">
+                            <div class="row height align-items-center justify-content-center">
+                                <div class="col-lg-10">
+                                    <div class="generic-banner-content">
+                                        <h2 class="head2-inner">Higher First Call Resolution Capabilities!</h2>
+                                        <p class="text-white" style={{ opacity: 0.5 }}> Centralized instances of SOPs and KEDBS</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <Container style={{ alignItems: 'center', width: "1250px" }}>
+
+
+                    <div class="row col-md-12">
+                        <div class="col-md-1" />
+                        <div class="col-md-10"><br />
+                            <div style={{ textAlign: 'center' }}>
+                                <h2>Order Summary</h2>
+                            </div>
+                            <br />
+                            <table className="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="head" scope="col" style={{ fontSize: 14, fontFamily: 'Poppins' }}>Plan Name</th>
+                                        <th class="head" scope="col" style={{ fontSize: 14, fontFamily: 'Poppins' }}>Subscription</th>
+                                        <th class="head" scope="col" style={{ fontSize: 14, fontFamily: 'Poppins' }}>Payment Terms</th>
+                                        <th class="head" scope="col" style={{ fontSize: 14, fontFamily: 'Poppins' }}>Plan Price (<span style={{ fontFamily: 'Open Sans' }}>{currency}</span>)</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {
+                                        this.state.data.individualPlanPricingList && this.state.data.individualPlanPricingList.length > 0 && this.state.data.individualPlanPricingList.map((row, rowkey) => (
+                                            <tr key={rowkey}>
+                                                <td>{row.plan}</td>
+                                                <td>{this.state.data.contractDuration}</td>
+                                                <td>{row.paymentTerms}
+
+
+                                                    {/*    { this.state.data.contractDuration !== "Pay Per use"?<select type="dropdown" className="form-control" name="terms" value={row.paymentTerms}
+                                                        placeholder='select' onChange={() => this.termsHandleChange(row, rowkey, event)}>
+                                                        <option value=""></option>
+                                                        <option value="Yearly">Yearly</option>
+                                                        <option value="Monthly">Monthly</option>
+                                                    </select>:
+                                                    <select type="dropdown" className="form-control" name="terms" value={row.paymentTerms}
+                                                    placeholder='select' onChange={() => this.termsHandleChange(row, rowkey, event)}>
+                                                    <option value=""></option>
+                                                <option value="Yearly">Yearly</option> 
+                                                    <option value="Monthly">Monthly</option>
+                                                </select>}*/}
+
+
+                                                </td>
+
+                                                {this.state.data.contractDuration !== "Pay Per use" ? <td >
+                                                   
+                                                    {row.paymentTerms== "Monthly" ? <tr>
+                                                    <td style={{textAlign:"left"}} >Price<span style={{fontSize:10}}>/Month</span></td>
+                                                        <td>:</td>
+                                                        <td >{row.amountPayableForEveryMonth||row.amountPaybleForEveryMonth}</td>            
+                                                                </tr>:null}
+                                                                
+                                                                <tr>
+                                                        <td >Billing Cycle Price</td>
+                                                        <td>:</td>
+                                                        {row.paymentTerms =="Monthly"?<td >{row.totalPricePerMonth}</td>: <td >{row.totalPricePerYear}</td>}
+                                                       
+                                                    </tr>
+                                                    <tr>
+                                                        <td style={{textAlign:"left"}} >{row.discount}% Discount</td>
+                                                        <td>:</td>
+                                                        <td >- {row.discountAmount} </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style={{textAlign:"left"}}  >Amount</td>
+                                                        <td>:</td>
+                                                        <td >{row.price} </td>
+                                                        <td>
+                                                            <Link data-tip data-for={"registerTip" + rowkey}>
+                                                                 <i className="c-blue-900 ti-info-alt"></i>
+                                                                </Link>
+
+                                                            <ReactTooltip id={"registerTip" + rowkey} place="right"  effect="solid">
+                                                            <div style={{ textAlign: 'left' }}>
+                                                                   
+                                                               Per Day Cost = ({row.ticket}*{row.ticketPerCost}*12)/365)
+                                                                </div>
+                                                                <div style={{ textAlign: 'left' }}>
+                                                                Billing Cycle Price=(Per Day Cost*{row.days}) = {row.paymentTerms =="Monthly"?row.totalPricePerMonth:row.totalPricePerYear}
+                                                                    </div>
+                                                                
+                                                            { this.state.data.contractDuration =="Pay Per use"  ?(<div style={{ textAlign: 'left' }}>
+                                                            Amount={row.ticket}*{row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>)-{row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>={row.price}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>
+                                                                </div>):
+                                                            (row.paymentTerms =="Monthly"? <div style={{ textAlign: 'left' }}>
+                                                            Amount=({row.ticket}*{row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>)-{row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>={row.price}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>
+                                                        </div>:
+                                                        <div style={{ textAlign: 'left' }} >
+                                                            <div>
+                                                            ({row.ticket}*{row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>*12)-{row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>={row.price}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>
+                                                            </div>
+                                                        12 - No. of Month
+                                                    </div>
+                                                    
+                                                    )}
+                                                    <br></br>
+                                                    <div style={{ textAlign: 'left' }}>
+                                                                    {/* {console.log("test" + row.days)} */}
+                                                                Amount for {row.days} days
+                                                                </div>
+                                                                <div style={{ textAlign: 'left' }}>
+                                                                    {row.ticket} - No. of Tickets
+                                                                </div>
+                                                                <div style={{ textAlign: 'left' }}>
+                                                                    {row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span> - Cost per Ticket
+                                                                </div>
+                                                                <div style={{ textAlign: 'left' }}>
+                                                                    {row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span> - Discount({row.discount}%)
+                                                                </div>
+                                                            </ReactTooltip><div class="col-md-1" />  </td>
+                                                    </tr>
+                                                </td>: 
+                                                    
+                                            
+                                            null}
+                                            {this.state.data.contractDuration == "Pay Per use"?
+                                           <td >
+                                                {row.paymentTerms== "Monthly" ? <tr>
+                                           <td style={{textAlign:"left"}} >Price<span style={{fontSize:10}}>/Month</span></td>
+                                               <td>:</td>
+                                               <td >{row.amountPayableForEveryMonth||row.amountPaybleForEveryMonth}</td> 
+                                              </tr>:null}
+
+                                           <tr>
+                                               <td >Billing Cycle Price</td>
+                                               <td>:</td>
+                                               {row.paymentTerms =="Monthly"?<td >{row.totalPricePerMonth}</td>: <td >{row.totalPricePerYear}</td>}
+                                              
+                                           
+                                           <td>
+                                                   <Link data-tip data-for={"registerTip" + rowkey}>
+                                                        <i className="c-blue-900 ti-info-alt"></i>
+                                                       </Link>
+
+                                                   <ReactTooltip id={"registerTip" + rowkey} place="right"  effect="solid">
+                                                       <div style={{ textAlign: 'left' }}>
+                                                           {/* {console.log("test" + row.days)} */}
+                                                       Amount for {row.days} days
+                                                       </div>
+                                                       <div style={{ textAlign: 'left' }}>
+                                                           ({row.ticket}*{row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>)-{row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>={row.price}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span>
+                                                       </div>
+                                                       <div style={{ textAlign: 'left' }}>
+                                                           {row.ticket} - No. of tickets
+                                                       </div>
+                                                       <div style={{ textAlign: 'left' }}>
+                                                           {row.ticketPerCost}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span> - Cost per ticket
+                                                       </div>
+                                                       <div style={{ textAlign: 'left' }}>
+                                                           {row.discountAmount}<span style={{ fontFamily: 'Open Sans' }}>({currency})</span> - Discount({row.discount}%)
+                                                       </div>
+                                                   </ReactTooltip><div class="col-md-1" />  </td></tr>
+                                           
+                                          
+                                          
+                                               
+                                       </td>:null}
+                                                       
+                                            </tr>
+
+                                        ))
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    </div>
+
+
+
+                    <br />  <br />
+
+
+
+                    {((!window.sessionStorage.getItem(Constants.ACCESS_EMAIL))) ? null : <div class="row col-md-12">
+                        <div class="col-md-3" />
+
+                        <div class="col-md-3" style={{ fontSize: 14, marginright: -20, fontFamily: "Poppins" }}>
+                            Tax({this.state.data.taxPercentage}%)
+
+            </div>
+                        <div class="col-md-1">:</div>
+                        <div class="col-md-2">
+                            <input type="text" style={{ fontFamily: 'Open Sans' }} className="form-control" name="estimationValue" disabled="true" value={this.state.data.taxAmount + " " + currency} />
+
+                        </div>
+
+                    </div>}
+                    <br />
+                    <div class="row col-md-12">
+                        <div class="col-md-3" />
+                        <div class="col-md-3" style={{ fontSize: 14, marginright: -20, fontFamily: "Poppins" }}>
+
+                            Total Amount Payable
+        </div>
+                        <div class="col-md-1">:</div>
+                        <div class="col-md-2">
+                            <input type="text" className="form-control" name="estimationValue" disabled="true" value={this.state.data.estimationValue} />
+                            {((!window.sessionStorage.getItem(Constants.ACCESS_EMAIL))) ? <div >
+                                (+ Tax Applicable) </div> : null}
+                        </div>
+                        <div class="col-md-2">
+                            <select type="dropdown" className="form-control" name="currency" style={{ fontFamily: 'Open Sans' }} value={this.state.currency}
+                                placeholder='select' onChange={this.currencyHandleChange}>
+                                <option value="$" select >USD($)</option>
+                                <option value="₹">INR(₹)</option>
+                            </select>        </div>
+                        <i class="fas fa-lightbulb"></i>
+
+
+                    </div>
+                    <br />  <br />
+                    {/* {<Button className="genric-btn primary radius text-uppercase" onClick={this.viewDmsa}>NEXT</Button>} */}
+
+                   {window.sessionStorage.getItem(Constants.ACCESS_CUSTOMERID)!== "undefined"? 
+                   <div class="row col-md-12">
+                        <div class="col-md-5" />
+
+                        <div class="col-md-2">
+                            <Button className="genric-btn primary radius text-uppercase" onClick={this.viewDmsa}>NEXT</Button>
+                        </div>
+
+                        <div class="col-md-5" />
+                    </div>:
+                             <div class="row col-md-12">
+                    <div class="col-md-4" />
+
+                    <div class="col-md-6">
+<text style={{fontWeight:'bold'}}>Administrator Access is need for the Further process</text>
+                    </div>
+
+                    <div class="col-md-2" />
+                </div>}
+                    <br />  <br />
+
+                </Container>
+
+                <Footer />
+            </div>
+        )
+
+    }
+}
+customizePage2.propTypes = {
+
+    submitAddFeedback: PropTypes.func,
+    recommendedPrice: PropTypes.func,
+    pricedetails: PropTypes.func,
+    currencyInr: PropTypes.func,
+    priceByTerms: PropTypes.func,
+    insertPlanResponse: PropTypes.func,
+};
+
+
+const mapStateToProps = state => {
+    // console.log(state, 'feedback list');
+    return {
+        pricedetails: state.priceDetailsReducer.pricedetails,
+        recommendedPrice: state.customizePageReducer.recommendedPrice,
+        currencyInr: state.priceDetailsReducer.currencyInr,
+        priceByTerms: state.priceDetailsReducer.priceByTerms,
+        dataCustomizePage: state.priceDetailsReducer.dataCustomizePage,
+        insertPlanResponse:state.priceDetailsReducer.insertPlanResponse,
+    };
+};
+const mapDispatchToProps = dispatch => ({
+
+    getPriceDetails: data => dispatch(getPriceDetails(data)),
+    getPriceByTerms: data => dispatch(getPriceByTerms(data)),
+    requestInr: data => dispatch(requestInr(data)),
+    dataCustomizePage2: data => dispatch(dataCustomizePage2(data)),
+    insertPlan:data => dispatch(insertPlan(data))
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(customizePage2);
