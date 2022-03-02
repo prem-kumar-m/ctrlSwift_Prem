@@ -1,0 +1,25 @@
+.nav-item {
+  margin-left: 10px;
+}
+#basic-navbar-nav .navbar-nav .nav-link {
+  color: #fff;
+  font-weight: 400;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.content {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: -20;
+}
+#header {
+  position: fixed;
+  padding: 14px 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  transition: all 0.5s;
+  z-index: 997;
+  background-color: rgba(4, 9, 30, 0.85);
+}
